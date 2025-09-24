@@ -7,7 +7,9 @@ Welcome to the deployment wiki for the Multilingual Support Chatbot. This guide 
 ## 📚 Table of contents
 
 1. [Local developer environment](#local-developer-environment)
-2. [Deploying the Chalice API to AWS](#deploying-the-chalice-api-to-aws)
+
+2. [Deploying the Flask API](#deploying-the-flask-api)
+
 3. [Publishing the React prototype](#publishing-the-react-prototype)
 4. [Post-deployment validation](#post-deployment-validation)
 
@@ -33,11 +35,13 @@ This runbook spins up the entire stack on a laptop for rapid iteration.
    source .venv/bin/activate
    pip install -r requirements.txt
    ```
-2. **Start the Chalice API locally.**
+
+2. **Start the Flask API locally.**
    ```bash
-   chalice local --port 8000
+   flask --app app run --port 8000
    ```
-   The OpenAPI style endpoints are now reachable at `http://localhost:8000`.
+   The endpoints are now reachable at `http://localhost:8000`.
+
 3. **Install and run the React prototype.**
    ```bash
    cd frontend
@@ -45,6 +49,7 @@ This runbook spins up the entire stack on a laptop for rapid iteration.
    npm run dev -- --host
    ```
 
+   `npm install` is required even if you already ran `pip install -r requirements.txt`; the two commands manage different dependency sets. Vite exposes the UI on `http://localhost:5173` and proxies requests to the Flask API. Update `VITE_API_BASE_URL` in a `.env` file to target a different backend.
 
 4. **Run the automated tests.**
    ```bash
@@ -53,23 +58,26 @@ This runbook spins up the entire stack on a laptop for rapid iteration.
 
 ---
 
-## Deploying the Chalice API to AWS
 
-This runbook publishes the serverless backend to AWS Lambda behind an API Gateway.
+## Deploying the Flask API
+
+This runbook packages the Flask service for environments such as AWS Elastic Beanstalk, ECS, or any container platform.
 
 | Step | Action | Notes |
 | ---- | ------ | ----- |
-| 1 | **Package the application.** | Ensure `FINE_TUNED_MODEL_PATH` is set if you plan to ship a custom model. |
-| 2 | **Deploy with Chalice.** | `chalice deploy --stage prod` creates the Lambda function and API Gateway. |
-| 3 | **Record outputs.** | The command prints the deployed URL; copy it to your team wiki or secrets manager. |
-| 4 | **Configure environment variables.** | Update the Lambda function with `FINE_TUNED_MODEL_PATH` or `ORCHESTRATOR_GENERATION_CONFIG` as required. |
+| 1 | **Build a production image.** | Create a Dockerfile that installs `requirements.txt` and exposes port `8000` via Gunicorn: `gunicorn --bind 0.0.0.0:8000 app:app`. |
+| 2 | **Publish the image.** | Push to Amazon ECR, GitHub Container Registry, or your preferred registry. |
+| 3 | **Provision the runtime.** | Create an ECS service, Fargate task, or other container host referencing the pushed image. |
+| 4 | **Configure environment variables.** | Set `FINE_TUNED_MODEL_PATH` and `ORCHESTRATOR_GENERATION_CONFIG` as required. |
+| 5 | **Expose networking.** | Attach a load balancer or API Gateway HTTP integration that forwards traffic to port `8000`. |
 
-> ℹ️ **Tip:** Chalice maintains deployment state in `.chalice/deployed`. Commiting this directory is optional but helps track historical releases in smaller teams.
+> ℹ️ **Tip:** The Flask app defaults to port 8000 so it remains compatible with the React prototype configuration. Override the `PORT` environment variable if your platform requires a different port.
 
 ### Rolling back
 
-1. Run `chalice delete --stage prod` to remove the current stack.
-2. Re-run `chalice deploy --stage prod --profile <profile>` pointing to the last known good commit.
+1. Re-deploy the last known good container image.
+2. Redeploy infrastructure templates (ECS service, Beanstalk environment, etc.) with the stable image reference if configuration drift is suspected.
+
 
 ---
 
@@ -91,7 +99,9 @@ This runbook converts the Vite-based prototype into static assets that can be ho
 3. **Upload the build artifacts.**
    - **S3:** `aws s3 sync dist/ s3://your-bucket-name --acl public-read`
    - **GitHub Pages:** Push `dist` to the `gh-pages` branch with your preferred automation.
-4. **Connect the UI to the API.** Ensure CORS is enabled on the Chalice deployment (already configured to allow all origins) and update DNS records if hosting on a custom domain.
+
+4. **Connect the UI to the API.** Ensure CORS is enabled on the Flask deployment (already configured to allow all origins) and update DNS records if hosting on a custom domain.
+
 
 ---
 

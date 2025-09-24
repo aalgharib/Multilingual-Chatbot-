@@ -174,7 +174,9 @@ function App() {
       <header className="app__header">
         <h1>Multilingual Chatbot Prototype</h1>
         <p className="app__subtitle">
-          Connects to the Chalice API at <code>{API_BASE_URL}</code>
+
+          Connects to the Flask API at <code>{API_BASE_URL}</code>
+
         </p>
       </header>
 
