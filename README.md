@@ -35,6 +35,7 @@ The chatbot exposes REST endpoints through AWS Chalice while delegating language
 - Python 3.8+
 - AWS CLI configured
 - Chalice framework
+- Node.js 18+ and npm (required to build or run the React prototype)
 
 ## Setup Instructions
 
@@ -42,6 +43,12 @@ The chatbot exposes REST endpoints through AWS Chalice while delegating language
 2. Install dependencies:
    ```bash
    pip install -r requirements.txt
+   ```
+   Installing `requirements.txt` covers the Python backend only. To run the prototype UI you must also install the frontend dependencies:
+   ```bash
+   cd frontend
+   npm install
+   cd ..
    ```
 3. (Optional) Export `FINE_TUNED_MODEL_PATH` to point to your trained model directory.
 4. Deploy the application:
