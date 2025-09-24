@@ -7,7 +7,9 @@ Welcome to the deployment wiki for the Multilingual Support Chatbot. This guide 
 ## 📚 Table of contents
 
 1. [Local developer environment](#local-developer-environment)
+
 2. [Deploying the Flask API](#deploying-the-flask-api)
+
 3. [Publishing the React prototype](#publishing-the-react-prototype)
 4. [Post-deployment validation](#post-deployment-validation)
 
@@ -33,24 +35,29 @@ This runbook spins up the entire stack on a laptop for rapid iteration.
    source .venv/bin/activate
    pip install -r requirements.txt
    ```
+
 2. **Start the Flask API locally.**
    ```bash
    flask --app app run --port 8000
    ```
    The endpoints are now reachable at `http://localhost:8000`.
+
 3. **Install and run the React prototype.**
    ```bash
    cd frontend
    npm install
    npm run dev -- --host
    ```
+
    `npm install` is required even if you already ran `pip install -r requirements.txt`; the two commands manage different dependency sets. Vite exposes the UI on `http://localhost:5173` and proxies requests to the Flask API. Update `VITE_API_BASE_URL` in a `.env` file to target a different backend.
+
 4. **Run the automated tests.**
    ```bash
    pytest
    ```
 
 ---
+
 
 ## Deploying the Flask API
 
@@ -70,6 +77,7 @@ This runbook packages the Flask service for environments such as AWS Elastic Bea
 
 1. Re-deploy the last known good container image.
 2. Redeploy infrastructure templates (ECS service, Beanstalk environment, etc.) with the stable image reference if configuration drift is suspected.
+
 
 ---
 
@@ -91,7 +99,9 @@ This runbook converts the Vite-based prototype into static assets that can be ho
 3. **Upload the build artifacts.**
    - **S3:** `aws s3 sync dist/ s3://your-bucket-name --acl public-read`
    - **GitHub Pages:** Push `dist` to the `gh-pages` branch with your preferred automation.
+
 4. **Connect the UI to the API.** Ensure CORS is enabled on the Flask deployment (already configured to allow all origins) and update DNS records if hosting on a custom domain.
+
 
 ---
 
