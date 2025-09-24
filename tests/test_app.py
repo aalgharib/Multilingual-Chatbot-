@@ -1,9 +1,7 @@
 import sys
-import json
 from pathlib import Path
 
 import pytest
-from chalice.test import Client
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -12,24 +10,23 @@ from app import app
 
 @pytest.fixture
 def client():
-    return Client(app)
+    app.config.update({"TESTING": True})
+    with app.test_client() as test_client:
+        yield test_client
 
 
 def test_chat_endpoint_returns_response_and_session(client):
-    response = client.http.post(
+    response = client.post(
         "/chat",
-        headers={"Content-Type": "application/json"},
-        body=json.dumps(
-            {
-                "message": "Hello",
-                "source_language": "en",
-                "target_language": "es",
-                "session_id": "test-session",
-            }
-        ),
+        json={
+            "message": "Hello",
+            "source_language": "en",
+            "target_language": "es",
+            "session_id": "test-session",
+        },
     )
     assert response.status_code == 200
-    body = response.json_body
+    body = response.get_json()
     assert body["session_id"] == "test-session"
     assert body["source_language"] == "en"
     assert body["target_language"] == "es"
@@ -38,22 +35,19 @@ def test_chat_endpoint_returns_response_and_session(client):
 
 
 def test_chat_history_endpoint_reflects_previous_messages(client):
-    client.http.post(
+    client.post(
         "/chat",
-        headers={"Content-Type": "application/json"},
-        body=json.dumps(
-            {
-                "message": "Testing history",
-                "source_language": "en",
-                "target_language": "en",
-                "session_id": "history-session",
-            }
-        ),
+        json={
+            "message": "Testing history",
+            "source_language": "en",
+            "target_language": "en",
+            "session_id": "history-session",
+        },
     )
 
-    response = client.http.get("/chat-history/history-session")
+    response = client.get("/chat-history/history-session")
     assert response.status_code == 200
-    history = response.json_body
+    history = response.get_json()
     assert len(history) == 1
     record = history[0]
     assert record["user_input"] == "Testing history"
@@ -61,37 +55,34 @@ def test_chat_history_endpoint_reflects_previous_messages(client):
 
 
 def test_reset_history_endpoint(client):
-    client.http.post(
+    client.post(
         "/chat",
-        headers={"Content-Type": "application/json"},
-        body=json.dumps({"message": "Reset me", "session_id": "reset-session"}),
+        json={"message": "Reset me", "session_id": "reset-session"},
     )
-    response = client.http.delete("/chat-history/reset-session")
+    response = client.delete("/chat-history/reset-session")
     assert response.status_code == 200
-    body = response.json_body
+    body = response.get_json()
     assert body == {"session_id": "reset-session", "cleared": True}
 
-    history_response = client.http.get("/chat-history/reset-session")
+    history_response = client.get("/chat-history/reset-session")
     assert history_response.status_code == 200
-    assert history_response.json_body == []
+    assert history_response.get_json() == []
 
 
 def test_text_to_speech_returns_audio_payload(client):
-    response = client.http.post(
+    response = client.post(
         "/text-to-speech",
-        headers={"Content-Type": "application/json", "Accept": "audio/mpeg"},
-        body=json.dumps({"text": "Hello world", "language_code": "en-US", "voice_id": "Joanna"}),
+        json={"text": "Hello world", "language_code": "en-US", "voice_id": "Joanna"},
     )
     assert response.status_code == 200
     assert response.headers["Content-Type"] == "audio/mpeg"
-    assert response.body.startswith(b"ID3")
+    assert response.data.startswith(b"ID3")
 
 
 def test_empty_chat_message_returns_default_prompt(client):
-    response = client.http.post(
+    response = client.post(
         "/chat",
-        headers={"Content-Type": "application/json"},
-        body=json.dumps({"session_id": "empty-session", "message": ""}),
+        json={"session_id": "empty-session", "message": ""},
     )
     assert response.status_code == 200
-    assert response.json_body["response"] == "I'm ready whenever you want to chat."
+    assert response.get_json()["response"] == "I'm ready whenever you want to chat."
