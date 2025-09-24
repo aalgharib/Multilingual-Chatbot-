@@ -24,11 +24,11 @@ At the end of training the directory `models/fine_tuned` will contain the model 
 
 ## Load the model in the API
 
-Set the path as an environment variable before starting Chalice:
+Set the path as an environment variable before starting Flask:
 
 ```bash
 export FINE_TUNED_MODEL_PATH=$(pwd)/models/fine_tuned
-chalice local --port 8000
+flask --app app run --port 8000
 ```
 
 Each incoming chat request uses a dedicated `PromptOrchestrator` instance so conversation history and LangChain memory do not bleed across sessions. The orchestrator falls back to a deterministic responder when a trained model is not available, enabling tests and CI pipelines to run quickly.

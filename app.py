@@ -1,4 +1,4 @@
-"""Serverless API entrypoint for the multilingual chatbot."""
+"""Flask API entrypoint for the multilingual chatbot."""
 from __future__ import annotations
 
 import json
@@ -7,19 +7,21 @@ import os
 import uuid
 from typing import Dict, List
 
-from chalice import Chalice, Response
-from chalice.app import CORSConfig
+from flask import Flask, Response as FlaskResponse, jsonify, make_response, request, send_from_directory
+from flask_cors import CORS
 
 from ml.orchestrator import PromptOrchestrator
 
 LOGGER = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
-app = Chalice(app_name="multilingual-chatbot")
-
-cors_config = CORSConfig(
-    allow_origin="*",
-    allow_headers=["Content-Type", "X-Amz-Date", "Authorization", "X-Api-Key"],
+app = Flask(__name__)
+app.config["JSON_SORT_KEYS"] = False
+CORS(
+    app,
+    resources={r"/*": {"origins": "*"}},
+    allow_headers=["Content-Type", "Authorization", "X-Requested-With"],
+    supports_credentials=False,
     max_age=600,
 )
 
@@ -97,15 +99,16 @@ _orchestrators = OrchestratorPool(MODEL_PATH, GENERATION_CONFIG)
 
 
 @app.route("/", methods=["GET"])
-def index():
-    with open("templates/index.html", "r", encoding="utf-8") as f:
-        return Response(body=f.read(), headers={"Content-Type": "text/html"}, status_code=200)
+def index() -> FlaskResponse:
+    """Serve the landing page for ad-hoc manual testing."""
+    return send_from_directory("templates", "index.html")
 
 
-@app.route("/chat", methods=["POST"], cors=cors_config)
-def chat():
+@app.route("/chat", methods=["POST"])
+def chat() -> FlaskResponse:
+    """Run the prompt orchestrator and persist the interaction."""
     try:
-        body = app.current_request.json_body or {}
+        body = request.get_json(silent=True) or {}
         user_input = str(body.get("message", ""))
         target_language = str(body.get("target_language", "en"))
         source_language = str(body.get("source_language", "auto"))
@@ -130,29 +133,35 @@ def chat():
             "source_language": source_language,
             "target_language": target_language,
         }
-        return Response(body=json.dumps(payload), status_code=200)
-    except Exception as exc:  # pragma: no cover - framework defensive branch
+        return jsonify(payload), 200
+    except Exception as exc:  # pragma: no cover - defensive branch
         LOGGER.exception("Error processing /chat request")
-        return Response(body=json.dumps({"error": str(exc)}), status_code=500)
+        return jsonify({"error": str(exc)}), 500
 
 
-@app.route("/text-to-speech", methods=["POST"], cors=cors_config)
-def text_to_speech():
-    body = app.current_request.json_body or {}
+@app.route("/text-to-speech", methods=["POST"])
+def text_to_speech() -> FlaskResponse:
+    """Return deterministic bytes that simulate a text-to-speech payload."""
+    body = request.get_json(silent=True) or {}
     text = str(body.get("text", ""))
-    # This placeholder synthesiser returns deterministic bytes so tests remain lightweight.
     fake_audio = b"ID3" + text.encode("utf-8")
-    return Response(body=fake_audio, headers={"Content-Type": "audio/mpeg"}, status_code=200)
+    response = make_response(fake_audio)
+    response.headers["Content-Type"] = "audio/mpeg"
+    return response
 
 
-@app.route("/chat-history/{session_id}", methods=["GET"], cors=cors_config)
-def get_chat_history(session_id):
+@app.route("/chat-history/<session_id>", methods=["GET"])
+def get_chat_history(session_id: str) -> FlaskResponse:
     history = _history_repo.get(session_id)
-    return Response(body=json.dumps(history), status_code=200)
+    return jsonify(history), 200
 
 
-@app.route("/chat-history/{session_id}", methods=["DELETE"], cors=cors_config)
-def reset_history(session_id):
+@app.route("/chat-history/<session_id>", methods=["DELETE"])
+def reset_history(session_id: str) -> FlaskResponse:
     _orchestrators.reset(session_id)
     _history_repo.clear(session_id)
-    return Response(body=json.dumps({"session_id": session_id, "cleared": True}), status_code=200)
+    return jsonify({"session_id": session_id, "cleared": True}), 200
+
+
+if __name__ == "__main__":  # pragma: no cover - convenience for local debugging
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", "8000")), debug=True)
