@@ -174,16 +174,17 @@ function App() {
       <header className="app__header">
         <h1>Multilingual Chatbot Prototype</h1>
         <p className="app__subtitle">
-
           Connects to the Flask API at <code>{API_BASE_URL}</code>
-
         </p>
       </header>
 
       <section className="app__panel">
         <div className="app__panel-header">
           <h2>Conversation</h2>
-          <div className="session-indicator" title={sessionId || 'Session not yet established'}>
+          <div
+            className="session-indicator"
+            title={sessionId || "Session not yet established"}
+          >
             {sessionSummary}
           </div>
         </div>
@@ -195,7 +196,11 @@ function App() {
             </div>
           ) : (
             messages.map((message, index) => (
-              <Message key={`${message.role}-${index}`} role={message.role} text={message.text} />
+              <Message
+                key={`${message.role}-${index}`}
+                role={message.role}
+                text={message.text}
+              />
             ))
           )}
         </div>
@@ -210,11 +215,11 @@ function App() {
             Source language
             <select
               value={sourceLanguage}
-              onChange={event => setSourceLanguage(event.target.value)}
+              onChange={(event) => setSourceLanguage(event.target.value)}
               className="composer__select"
               disabled={isLoading}
             >
-              {LANGUAGE_OPTIONS.map(option => (
+              {LANGUAGE_OPTIONS.map((option) => (
                 <option key={option.code} value={option.code}>
                   {option.label}
                 </option>
@@ -226,11 +231,11 @@ function App() {
             Target language
             <select
               value={targetLanguage}
-              onChange={event => setTargetLanguage(event.target.value)}
+              onChange={(event) => setTargetLanguage(event.target.value)}
               className="composer__select"
               disabled={isLoading}
             >
-              {TARGET_LANGUAGE_OPTIONS.map(option => (
+              {TARGET_LANGUAGE_OPTIONS.map((option) => (
                 <option key={option.code} value={option.code}>
                   {option.label}
                 </option>
@@ -243,7 +248,7 @@ function App() {
             <textarea
               className="composer__textarea"
               value={input}
-              onChange={event => setInput(event.target.value)}
+              onChange={(event) => setInput(event.target.value)}
               placeholder="Ask something in any language…"
               rows={4}
               disabled={isLoading}
@@ -253,10 +258,20 @@ function App() {
           {error && <div className="composer__error">{error}</div>}
 
           <div className="composer__actions">
-            <button type="submit" className="composer__button" disabled={isLoading || !input.trim()}>
-              {isLoading ? 'Sending…' : 'Send message'}
+            <button
+              type="submit"
+              className="composer__button"
+              disabled={isLoading || !input.trim()}
+            >
+              {isLoading ? "Sending…" : "Send message"}
             </button>
-            <button type="button" className="composer__button composer__button--secondary" onClick={handleReset} disabled={isLoading}>
+            
+            <button
+              type="button"
+              className="composer__button composer__button--secondary"
+              onClick={handleReset}
+              disabled={isLoading}
+            >
               Start new session
             </button>
           </div>
@@ -265,5 +280,4 @@ function App() {
     </div>
   );
 }
-
 export default App;
