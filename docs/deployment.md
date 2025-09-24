@@ -44,7 +44,8 @@ This runbook spins up the entire stack on a laptop for rapid iteration.
    npm install
    npm run dev -- --host
    ```
-   `npm install` is required even if you already ran `pip install -r requirements.txt`; the two commands manage different dependency sets. Vite exposes the UI on `http://localhost:5173` and proxies requests to the Chalice API. Update `VITE_API_BASE_URL` in a `.env` file to target a different backend.
+
+
 4. **Run the automated tests.**
    ```bash
    pytest
