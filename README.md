@@ -1,6 +1,6 @@
 # Multilingual Support Chatbot
 
-A serverless multilingual chatbot using AWS AI services to facilitate communication between users who speak different languages.
+A serverless multilingual chatbot that now integrates custom fine-tuned language models from Hugging Face Transformers and prompt orchestration powered by LangChain. The service enables multilingual conversations and provides lightweight endpoints suitable for experimentation or deployment behind an API Gateway using AWS Chalice.
 
 ## Team Members
 
@@ -12,25 +12,21 @@ A serverless multilingual chatbot using AWS AI services to facilitate communicat
 
 ## Project Overview
 
-This project implements a multilingual chatbot that integrates Amazon Lex, Amazon Translate, and Amazon Polly to provide text and speech translation capabilities. The system is built using a serverless architecture for cost-effectiveness and scalability.
+The chatbot exposes REST endpoints through AWS Chalice while delegating language understanding to a LangChain-powered prompt orchestrator. Fine-tuning scripts and sample datasets are provided to adapt Hugging Face causal language models (for example GPT-2 derivatives) to your domain. The trained model can be loaded at runtime by setting the `FINE_TUNED_MODEL_PATH` environment variable.
 
 ## Features
 
-- Real-time multilingual text translation
-- Text-to-speech conversion
-- Natural language understanding
-- Secure data storage
-- Scalable serverless architecture
+- Hugging Face fine-tuning script for causal language models
+- LangChain prompt orchestration with conversation memory per session
+- REST API for chat, chat history, and placeholder text-to-speech responses
+- Sample multilingual dataset for experimentation
 
 ## Technical Stack
 
-- AWS Lambda
-- Amazon Lex
-- Amazon Translate
-- Amazon Polly
-- AWS DynamoDB
-- AWS CloudWatch
-- AWS Chalice
+- AWS Chalice for serverless deployment
+- Hugging Face Transformers, Datasets, and Accelerate for model training
+- LangChain for prompt orchestration and conversation memory
+- PyTest for automated testing
 
 ## Prerequisites
 
@@ -46,11 +42,42 @@ This project implements a multilingual chatbot that integrates Amazon Lex, Amazo
    ```bash
    pip install -r requirements.txt
    ```
-3. Configure AWS credentials
+3. (Optional) Export `FINE_TUNED_MODEL_PATH` to point to your trained model directory.
 4. Deploy the application:
    ```bash
    chalice deploy
    ```
+
+### Local development
+
+Run the API locally with Chalice:
+
+```bash
+chalice local --port 8000
+```
+
+Execute the unit test suite:
+
+```bash
+pytest
+```
+
+## Fine-tuning a language model
+
+Use the provided script to fine-tune a causal language model on a JSONL dataset:
+
+```bash
+python scripts/fine_tune_model.py \
+  --model-name-or-path distilgpt2 \
+  --dataset-path data/multilingual_chat_dataset.jsonl \
+  --output-dir models/fine_tuned
+```
+
+The script relies on the Hugging Face `Trainer` API, supports optional evaluation splits, and saves the model/tokenizer to the specified directory. Set `FINE_TUNED_MODEL_PATH` to the resulting directory so the Chalice app loads it at startup. When no path is supplied, the application falls back to a lightweight template-based responder, keeping local development lightweight.
+
+## Prompt orchestration
+
+`ml/orchestrator.py` defines the `PromptOrchestrator` which wires LangChain's `LLMChain`, `PromptTemplate`, and `ConversationBufferMemory` together. The orchestrator keeps a dedicated memory per session so the chatbot can respond with awareness of prior turns. When a fine-tuned model path is available, the orchestrator streams requests through a Hugging Face text-generation pipeline; otherwise it uses a deterministic fallback implementation to remain test friendly.
 
 ## Project Structure
 
