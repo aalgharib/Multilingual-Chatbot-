@@ -36,7 +36,6 @@ The chatbot exposes REST endpoints through a Flask application while delegating 
 - AWS CLI configured
 - Flask
 
-
 - Node.js 18+ and npm (required to build or run the React prototype)
 
 ## Setup Instructions
