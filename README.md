@@ -19,6 +19,7 @@ The chatbot exposes REST endpoints through AWS Chalice while delegating language
 - Hugging Face fine-tuning script for causal language models
 - LangChain prompt orchestration with conversation memory per session
 - REST API for chat, chat history, and placeholder text-to-speech responses
+- Vite-powered React prototype for user-facing conversations
 - Sample multilingual dataset for experimentation
 
 ## Technical Stack
@@ -62,6 +63,16 @@ Execute the unit test suite:
 pytest
 ```
 
+Launch the React prototype to test the experience end-to-end:
+
+```bash
+cd frontend
+npm install
+npm run dev -- --host
+```
+
+The Vite dev server runs on [http://localhost:5173](http://localhost:5173) and proxies requests to the Chalice API running on port 8000. Set `VITE_API_BASE_URL` in a `.env` file to target a different backend.
+
 ## Fine-tuning a language model
 
 Use the provided script to fine-tune a causal language model on a JSONL dataset:
@@ -89,6 +100,11 @@ The script relies on the Hugging Face `Trainer` API, supports optional evaluatio
 ├── tests/
 └── docs/
 ```
+
+Additional assets:
+
+- `frontend/`: Vite + React prototype with components tailored to the API responses.
+- `docs/deployment.md`: Wiki-style runbooks that describe local setup, AWS deployment, and frontend publishing steps.
 
 ## Estimated Costs
 
