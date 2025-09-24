@@ -1,3 +1,4 @@
+
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { API_BASE_URL, getChatHistory, postChatMessage, resetChatHistory } from './api.js';
 
@@ -84,6 +85,7 @@ function App() {
   }, [sessionId]);
 
   useEffect(() => {
+
     if (typeof window === 'undefined') {
       return;
     }
@@ -262,7 +264,6 @@ function App() {
       setIsLoading(false);
     }
   }, [sessionId, setSessionId]);
-
   const toggleRecording = useCallback(() => {
     if (!recognitionSupported || !recognitionRef.current) {
       return;
@@ -300,6 +301,7 @@ function App() {
 
     return 'Use your microphone to dictate a message.';
   }, [isRecording, recognitionError, recognitionSupported]);
+
 
   return (
     <div className="app">
@@ -398,7 +400,6 @@ function App() {
               {voiceStatus}
             </span>
           </div>
-
           {error && <div className="composer__error">{error}</div>}
 
           <div className="composer__actions">

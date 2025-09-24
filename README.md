@@ -35,6 +35,7 @@ The chatbot exposes REST endpoints through a Flask application while delegating 
 - Python 3.8+
 - AWS CLI configured
 - Flask
+
 - Node.js 18+ and npm (required to build or run the React prototype)
 
 ## Setup Instructions
@@ -79,6 +80,7 @@ npm run dev -- --host
 ```
 
 The Vite dev server runs on [http://localhost:5173](http://localhost:5173) and proxies requests to the Flask API running on port 8000. Set `VITE_API_BASE_URL` in a `.env` file to target a different backend.
+
 
 ## Fine-tuning a language model
 
